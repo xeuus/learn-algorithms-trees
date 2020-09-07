@@ -1,5 +1,6 @@
 #include <iostream>
 #include <queue>
+#include <string.h>
 
 template <class E>
 struct Node {
@@ -29,6 +30,11 @@ struct Node {
 template<>
 int Node<int>::Compare(int key) {
 	return key - this->key;
+}
+
+template<>
+int Node<const char *>::Compare(const char* key) {
+	return strcmp(key, this->key);
 }
 
 template <class E>
@@ -145,7 +151,6 @@ int main(int argv, char* args[]) {
 	bt->Add(20);
 	bt->Add(10);
 	bt->Add(30);
-
 	bt->Add(8);
 	bt->Add(17);
 	bt->Add(25);
@@ -160,5 +165,12 @@ int main(int argv, char* args[]) {
 	bt->InOrder();
 	bt->Delete(28);
 	bt->InOrder();
+	auto bt2 = new BinarySearch<const char *>();
+	bt2->Add("Aryan");
+	bt2->Add("Name");
+	bt2->Add("Arash");
+	bt2->Add("Hello");
+	bt2->Add("World");
+	bt2->InOrder();
 	return 0;
 }
