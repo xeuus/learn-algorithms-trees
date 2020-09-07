@@ -3,58 +3,63 @@
 
 template <class E>
 struct Node {
-	E value;
+	E key;
 	Node<E> *parent;
 	Node<E> *left;
 	Node<E> *right;
 
 	Node(E val, Node<E> *par){
-		this->value = val;
+		this->key = val;
 		this->parent = par;
 		this->left = nullptr;
 		this->right = nullptr;
 	}
-	Node<E> *AddLeft(E val){
-		this->left = new Node(val, this);
-		return this->left;
-	}
-	Node<E> *AddRight(E val){
-		this->right = new Node(val, this);
-		return this->right;
+	~Node(){
+		delete parent;
+		delete left;
+		delete right;
 	}
 	void Visit() {
-		std::cout << this->value << " ";
+		std::cout << this->key << " ";
 	}
+
+	virtual int Compare(E other) {return 0;};
+	virtual void Dispose() {};
 };
+template<>
+int Node<int>::Compare(int key) {
+	return key - this->key;
+}
 
+template <class E>
 struct BinarySearch {
-	Node<int> *root;
+	Node<E> *root;
 
-	bool Add(int value) {
+	bool Add(E key) {
 		if(this->root == nullptr) {
-			this->root = new Node<int>(value, nullptr);
+			this->root = new Node<E>(key, nullptr);
 			return true;
 		}
-		Node<int> *curr = this->root;
-		int comp = value - curr->value;
+		Node<E> *curr = this->root;
+		int comp = curr->Compare(key);
 		while((comp > 0 && curr->right != nullptr) || (comp < 0 && curr->left != nullptr)) {
 			if(comp < 0)
 				curr = curr->left;
 			else
 				curr = curr->right;
-			comp = value - curr->value;
+			comp = curr->Compare(key);
 		}
 		if(comp < 0)
-			curr->AddLeft(value);
+			curr->left = new Node<E>(key, curr);
 		else if(comp > 0)
-			curr->AddRight(value);
+			curr->right = new Node<E>(key, curr);
 		return true;
 	}
 
-	bool Find(int value) {
-		Node<int> *curr = this->root;
+	bool Find(E key) {
+		Node<E> *curr = this->root;
 		while(curr != nullptr) {
-			int comp = value - curr->value;
+			int comp = curr->Compare(key);
 			if(comp > 0)
 				curr = curr->right;
 			else if(comp < 0)
@@ -65,65 +70,95 @@ struct BinarySearch {
 		return false;
 	}
 
-	bool Delete(int value) {
-		Node<int> *curr = this->root;
-		while(curr != nullptr) {
-			int comp = value - curr->value;
-			if(comp > 0)
-				curr = curr->right;
-			else if(comp < 0)
-				curr = curr->left;
-			else {
-				if(curr->left != nullptr && curr->right != nullptr) {
-
-				} else {
-
-				}
-			}
-		}
-		return false;
+	Node<E>* MinValueNode(Node<E> *node) {
+		auto current = node;
+	    while (current && current->left != nullptr) 
+	        current = current->left; 
+	    return current; 
 	}
 
-	void PreOrder(Node<int> *node) {
+	Node<E>* Delete(Node<E>* root, E key) {
+		if(root == nullptr)
+			return root;
+		int comp = root->Compare(key);
+	    if (comp < 0)
+	        root->left = this->Delete(root->left, key); 
+	    else if (comp > 0) 
+	        root->right = this->Delete(root->right, key); 
+	    else {
+	        if (root->left == nullptr) {
+	            auto temp = root->right;
+	            root->Dispose();
+	            free(root);
+	            return temp; 
+	        } 
+	        else if (root->right == nullptr) { 
+	            auto temp = root->left;
+	            root->Dispose();
+	            free(root);
+	            return temp;
+	        } 
+        	auto temp = this->MinValueNode(root->right);
+        	root->key = temp->key;
+    		root->right = this->Delete(root->right, temp->key); 
+	    }
+    	return root;
+	}
+
+	bool Delete(E key) {
+		return this->Delete(this->root, key) != nullptr;
+	}
+
+
+	void InOrder(Node<E> *node) {
 		if(node != nullptr) {
-			this->PreOrder(node->left);
+			this->InOrder(node->left);
 			node->Visit();
-			this->PreOrder(node->right);
+			this->InOrder(node->right);
 		}
 	}
-
-	void PreOrder() {
-		this->PreOrder(this->root);
+	void InOrder() {
+		this->InOrder(this->root);
+		std::cout << std::endl;
 	}
+
+
 	void LevelOrder() {
-		std::queue<Node<int>*> q;
+		std::queue<Node<E>*> q;
 		q.push(this->root);
 		while(!q.empty()) {
 			auto node = q.front();
 			q.pop();
-			if (node != nullptr) {
+			if(node != nullptr) {
 				node->Visit();
 				q.push(node->left);
 				q.push(node->right);
 			}
 		}
+		std::cout << std::endl;
 	}
 };
 
 int main(int argv, char* args[]) {
 
-	BinarySearch *bt = new BinarySearch();
-	bt->Add(60);
+	auto bt = new BinarySearch<int>();
 	bt->Add(20);
+	bt->Add(10);
 	bt->Add(30);
-	bt->Add(11);
-	bt->Add(78);
-	bt->PreOrder();
-	std::cout << std::endl;
 
-	std::cout << bt->Find(33) << std::endl;
-
-
-
+	bt->Add(8);
+	bt->Add(17);
+	bt->Add(25);
+	bt->Add(60);
+	bt->Add(4);
+	bt->Add(9);
+	bt->Add(23);
+	bt->Add(26);
+	bt->Add(40);
+	bt->Add(80);
+	bt->Add(28);
+	bt->InOrder();
+	bt->Delete(28);
+	bt->InOrder();
 	return 0;
 }
